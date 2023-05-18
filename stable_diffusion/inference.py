@@ -11,10 +11,14 @@ from PIL import Image
 from einops import rearrange
 from pytorch_lightning import seed_everything
 from contextlib import nullcontext
-from config import Config
-import latent_diffusion as ldm
 
-#from ldm.util import instantiate_from_config
+from config import Config
+
+import latent_diffusion
+
+import model.unet as unet
+import model.clip_embedder as clip_embedder
+import model.autoencoder as autoencoder
 
 USE_LDM = False
 
@@ -22,21 +26,57 @@ if USE_LDM:
     from ldm.models.diffusion.plms import PLMSSampler
     from ldm.models.diffusion.ddim import DDIMSampler
 
-#copied from 
+#addapted from 
 # https://huggingface.co/spaces/multimodalart/latentdiffusion/blob/main/latent-diffusion/ldm/util.py
 #ldm
-import importlib
-def get_obj_from_str(string, reload=False):
+def instantiate(string, reload=False):
     ## full function path = ldm.models.diffusion.ddpm.LatentDiffusion, do not use params
-    params = Config.params
+    autoencoder_params = Config.AUTO_ENCODER_PARAMS
+    unet_params = Config.UNET_PARAMS
+    latent_diffusion_params = Config.LATENT_DIFFUSION_PARAMS
 
-    return ldm.LatentDiffusion(**params)
+    autoencoder_model = autoencoder.Autoencoder(
+            encoder=autoencoder.Encoder(
+                channels=autoencoder_params["ddconfig"]["ch"],
+                channel_multipliers=autoencoder_params["ddconfig"]["ch_mult"],
+                n_resnet_blocks=autoencoder_params["ddconfig"]["num_res_blocks"],
+            ),
+            decoder=autoencoder.Decoder(
+                channels=autoencoder_params["ddconfig"]["ch"],
+                channel_multipliers=autoencoder_params["ddconfig"]["ch_mult"],
+                n_resnet_blocks=autoencoder_params["ddconfig"]["num_res_blocks"],
+                out_channels=autoencoder_params["ddconfig"]["out_ch"],
+                z_channels=autoencoder_params["ddconfig"]["z_channels"],
+            ),
+            emb_channels=autoencoder_params["embed_dim"],
+            z_channels=autoencoder_params["ddconfig"]["z_channels"],
+        )
+    
+    unet_model = unet.UNetModel(
+            in_channels=unet_params["in_channels"],
+            out_channels=unet_params["out_channels"],
+            channels=unet_params["model_channels"],
+            n_res_blocks=unet_params["num_res_blocks"],
+            attention_levels=unet_params["attention_resolutions"],
+            channel_multipliers=unet_params["channel_mult"],
+            n_heads=unet_params["num_heads"],
+            tf_layers=unet_params["transformer_depth"],
+            d_cond=unet_params["context_dim"],
+        )
+    
+    clip_embedder_model = clip_embedder.CLIPTextEmbedder()
 
-#copied from 
-# https://huggingface.co/spaces/multimodalart/latentdiffusion/blob/main/latent-diffusion/ldm/util.py
-#ldm
-def instantiate():
-    return get_obj_from_str()
+    return latent_diffusion.LatentDiffusion(
+        autoencoder=autoencoder_model,
+        unet_model=unet_model,
+        clip_embedder=clip_embedder_model,
+
+        latent_scaling_factor=latent_diffusion_params["latent_scaling_factor"],
+        linear_start=latent_diffusion_params["linear_start"],
+        linear_end=latent_diffusion_params["linear_end"],
+        n_steps=latent_diffusion_params["n_steps"],
+    )
+
 
 
 from transformers import logging
