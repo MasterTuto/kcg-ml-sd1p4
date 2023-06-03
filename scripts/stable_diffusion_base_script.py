@@ -77,7 +77,7 @@ class StableDiffusionBaseScript:
         
         # Concatenate the mask tensor with the image tensor
         img_with_mask = orig_image
-        if mask:
+        if mask is not None:
             img_with_mask = torch.cat([orig_image, mask], dim=1)
 
         # Encode the image in the latent space and make `batch_size` copies of it
