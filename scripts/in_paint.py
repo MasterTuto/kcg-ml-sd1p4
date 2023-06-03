@@ -46,7 +46,7 @@ class InPaint(StableDiffusionBaseScript):
         # Make a batch of prompts
         prompts = batch_size * [prompt]
 
-        orig = self.encode_image(orig_img, batch_size)
+        orig = self.encode_image(orig_img, batch_size, mask)
         mask = self.prepare_mask(mask, orig)
         
         # Noise diffuse the original image

@@ -69,14 +69,16 @@ class StableDiffusionBaseScript:
         # Load [latent diffusion model](../latent_diffusion.html)
         # Get device or force CPU if requested
 
-    def encode_image(self, orig_img: str, mask: torch.Tensor, batch_size: int = 1):
+    def encode_image(self, orig_img: str, batch_size: int = 1, mask: Optional[torch.Tensor] = None):
         """
         Encode an image in the latent space
         """
         orig_image = load_img(orig_img).to(self.device)
         
         # Concatenate the mask tensor with the image tensor
-        img_with_mask = torch.cat([orig_image, mask], dim=1)
+        img_with_mask = orig_image
+        if mask:
+            img_with_mask = torch.cat([orig_image, mask], dim=1)
 
         # Encode the image in the latent space and make `batch_size` copies of it
         orig = self.model.autoencoder_encode(img_with_mask).repeat(batch_size, 1, 1, 1)
