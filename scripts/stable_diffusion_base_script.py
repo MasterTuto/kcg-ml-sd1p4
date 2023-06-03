@@ -69,13 +69,17 @@ class StableDiffusionBaseScript:
         # Load [latent diffusion model](../latent_diffusion.html)
         # Get device or force CPU if requested
 
-    def encode_image(self, orig_img: str, batch_size: int = 1):
+    def encode_image(self, orig_img: str, mask: torch.Tensor, batch_size: int = 1):
         """
         Encode an image in the latent space
         """
         orig_image = load_img(orig_img).to(self.device)
+        
+        # Concatenate the mask tensor with the image tensor
+        img_with_mask = torch.cat([orig_image, mask], dim=1)
+
         # Encode the image in the latent space and make `batch_size` copies of it
-        orig = self.model.autoencoder_encode(orig_image).repeat(batch_size, 1, 1, 1)
+        orig = self.model.autoencoder_encode(img_with_mask).repeat(batch_size, 1, 1, 1)
 
         return orig
     
@@ -124,7 +128,6 @@ class StableDiffusionBaseScript:
         orig_2 = None
         # If we have a mask and noise, it's in-painting
         if mask is not None and orig_noise is not None:
-            orig = corrigir_entrada(orig, mask)
             orig_2 = orig
         # Add noise to the original image
         x = self.sampler.q_sample(orig, t_index, noise=orig_noise)
