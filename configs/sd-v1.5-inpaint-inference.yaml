@@ -1,46 +1,45 @@
 encoder:
-    z_channels: 4
-    in_channels: 3
-    channels: 128
-    channel_multipliers:
-      - 1
-      - 2
-      - 4
-      - 4
-    n_resnet_blocks: 2
-  decoder:
-    out_channels: 3
-    z_channels: 4
-    channels: 128
-    channel_multipliers:
-      - 1
-      - 2
-      - 4
-      - 4
-    n_resnet_blocks: 2
-  autoencoder:
-    emb_channels: 4
-    z_channels: 4
-  unet_model:
-    in_channels: 9
-    out_channels: 4
-    channels: 320
-    attention_levels:
-      - 4
-      - 2
-      - 1
-    n_res_blocks: 2
-    channel_multipliers:
-      - 1
-      - 2
-      - 4
-      - 4
-    n_heads: 8
-    tf_layers: 1
-    d_cond: 768
-  model:
-    linear_start: 0.00085
-    linear_end: 0.012
-    n_steps: 1000
-    latent_scaling_factor: 0.18215
-  
+  z_channels: 4
+  in_channels: 3
+  channels: 128
+  channel_multipliers:
+    - 1
+    - 2
+    - 4
+    - 4
+  n_resnet_blocks: 2
+decoder:
+  out_channels: 3
+  z_channels: 4
+  channels: 128
+  channel_multipliers:
+    - 1
+    - 2
+    - 4
+    - 4
+  n_resnet_blocks: 2
+autoencoder:
+  emb_channels: 4
+  z_channels: 4
+unet_model:
+  in_channels: 9
+  out_channels: 4
+  channels: 320
+  attention_levels:
+    - 4
+    - 2
+    - 1
+  n_res_blocks: 2
+  channel_multipliers:
+    - 1
+    - 2
+    - 4
+    - 4
+  n_heads: 8
+  tf_layers: 1
+  d_cond: 768
+model:
+  linear_start: 0.00085
+  linear_end: 0.012
+  n_steps: 1000
+  latent_scaling_factor: 0.18215
