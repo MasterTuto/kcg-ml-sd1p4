@@ -19,7 +19,7 @@ decoder:
     - 4
   n_resnet_blocks: 2
 autoencoder:
-  emb_channels: 9
+  emb_channels: 4
   z_channels: 4
 unet_model:
   in_channels: 9
