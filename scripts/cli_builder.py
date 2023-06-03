@@ -232,6 +232,20 @@ class CLI:
         )
 
         return self
+    
+    def config_path(self, default: str=""):
+        self.parser.add_argument(
+            "--config_path",
+            type=str,
+            default=default,
+            help="path to config (yaml) file, default is to use the default config"
+        )
+        
+        check_fn = lambda args: check_file_existence(args.config_path) if args.config_path else True
+
+        self.checkers.append( check_fn )
+
+        return self
 
     def parse(self):
         args = self.parser.parse_args()

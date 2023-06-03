@@ -71,9 +71,8 @@ def main():
         .output() \
         .force_cpu() \
         .cuda_device() \
+        .config_path() \
         .parse()
-    
-    print(opt)
 
     set_seed(42)
 
@@ -82,7 +81,7 @@ def main():
                       ddim_steps=opt.steps,
                       force_cpu=opt.force_cpu,
                       cuda_device=opt.cuda_device)
-    img2img.initialize_script()
+    img2img.initialize_script(config_path=opt.config_path)
 
     with monit.section('Generating images'):
         images = img2img.transform_image(

@@ -78,6 +78,7 @@ def main():
         .strength() \
         .force_cpu() \
         .cuda_device() \
+        .config_path('./config/sd-v1.5-inpaint-inference.yaml') \
         .parse()
 
     
@@ -92,7 +93,7 @@ def main():
                        ddim_steps=opt.steps,
                        force_cpu=opt.force_cpu,
                        cuda_device=opt.cuda_device)
-    in_paint.initialize_script()
+    in_paint.initialize_script(config_path=opt.config_path)
 
     with monit.section('Generate'):
         images = in_paint.repaint_image(

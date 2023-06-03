@@ -25,9 +25,9 @@ def generate_prompt(prompt_prefix, artist):
     prompt = f"{prompt_prefix} {artist}"
     return prompt
 
-def init_txt2img(checkpoint_path, sampler_name, n_steps):
+def init_txt2img(checkpoint_path, sampler_name, n_steps, config_path=''):
     txt2img = Txt2Img(checkpoint_path=checkpoint_path, sampler_name=sampler_name, n_steps=n_steps)
-    txt2img.initialize_script()
+    txt2img.initialize_script(config_path=config_path)
     return txt2img
 
 def get_all_prompts(prompt_prefix, artist_file):
@@ -66,10 +66,11 @@ def generate_images(
     sampler_name: str='ddim',
     n_steps: int=20,
     batch_size: int=1,
+    config_path: str=''
 ):
     time_before_initialization = time.time()
     
-    txt2img = init_txt2img(checkpoint_path, sampler_name, n_steps)
+    txt2img = init_txt2img(checkpoint_path, sampler_name, n_steps, config_path)
 
     time_after_initialization = time.time()
 
@@ -113,6 +114,7 @@ def main():
         .sampler() \
         .steps() \
         .batch_size() \
+        .config_path() \
         .parse()
 
     generate_images(

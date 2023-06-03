@@ -106,6 +106,7 @@ def main():
         .low_vram() \
         .force_cpu() \
         .cuda_device() \
+        .config_path() \
         .parse()
 
     prompts = get_prompts(opt.prompt, opt.prompts_file)
@@ -120,7 +121,7 @@ def main():
                       force_cpu=opt.force_cpu,
                       cuda_device=opt.cuda_device
                     )
-    txt2img.initialize_script()
+    txt2img.initialize_script(config_path=opt.config_path)
 
     with monit.section('Generate', total_steps=len(prompts)) as section:
         for prompt in prompts:

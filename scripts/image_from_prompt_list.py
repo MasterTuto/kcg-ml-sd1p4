@@ -13,6 +13,7 @@ def main():
         .checkpoint_path() \
         .prompts_file() \
         .output() \
+        .config_path() \
         .parse()
 
     # Load the diffusion model
@@ -26,7 +27,7 @@ def main():
     print("INFO: This script will generate a total of %s images" % (args.batch_size * len(prompts)))
 
     text2img = text_to_image.Txt2Img(checkpoint_path=model_path,)
-    text2img.initialize_script()
+    text2img.initialize_script(config_path=args.config_path)
     
     for (index, prompt) in enumerate(prompts):
         print("\nINFO: Currently generating %s images for prompt \"%s\"" % (args.batch_size, prompt))

@@ -24,6 +24,8 @@ from stable_diffusion.model.autoencoder import Encoder, Decoder, Autoencoder
 from stable_diffusion.model.clip_embedder import CLIPTextEmbedder
 from stable_diffusion.model.unet import UNetModel
 
+from stable_diffusion.utils.config import Config
+
 
 def set_seed(seed: int):
     """
@@ -34,59 +36,90 @@ def set_seed(seed: int):
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
 
+def load_encoder():
+    encoder_config = Config.config['encoder']
 
-def load_model(path: Union[str, Path] = '', device = 'cuda:0') -> LatentDiffusion:
-    """
-    ### Load [`LatentDiffusion` model](latent_diffusion.html)
-    """
+    encoder = Encoder(
+        **encoder_config
+    )
+    
+    return encoder
 
-    # Initialize the autoencoder
+def load_decoder():
+    decoder_config = Config.config['decoder']
+
+    decoder = Decoder(
+        **decoder_config
+    )
+    
+    return decoder
+
+def load_autoencoder():
+
     with monit.section('Initialize autoencoder'):
-        encoder = Encoder(z_channels=4,
-                          in_channels=3,
-                          channels=128,
-                          channel_multipliers=[1, 2, 4, 4],
-                          n_resnet_blocks=2)
+        encoder = load_encoder()
 
-        decoder = Decoder(out_channels=3,
-                          z_channels=4,
-                          channels=128,
-                          channel_multipliers=[1, 2, 4, 4],
-                          n_resnet_blocks=2)
+        decoder = load_decoder()
 
-        autoencoder = Autoencoder(emb_channels=4,
-                                  encoder=encoder,
-                                  decoder=decoder,
-                                  z_channels=4)
+        config = Config.config
+        autoencoder_config = {
+            **config['autoencoder'],
+            'encoder': encoder,
+            'decoder': decoder
+        }
 
-    # Initialize the CLIP text embedder
+        autoencoder = Autoencoder(
+            **autoencoder_config
+        )
+    
+        return autoencoder
+
+def load_unet_model():
+    with monit.section('Initialize U-Net'):
+        unet_config = Config.config['unet_model']
+
+        unet_model = UNetModel(
+            **unet_config
+        )
+
+    return unet_model
+
+def load_clip_text_embedder(device = 'cuda:0'):
     with monit.section('Initialize CLIP Embedder'):
         clip_text_embedder = CLIPTextEmbedder(
             device=device,
         )
 
-    # Initialize the U-Net
-    with monit.section('Initialize U-Net'):
-        unet_model = UNetModel(in_channels=4,
-                               out_channels=4,
-                               channels=320,
-                               attention_levels=[0, 1, 2],
-                               n_res_blocks=2,
-                               channel_multipliers=[1, 2, 4, 4],
-                               n_heads=8,
-                               tf_layers=1,
-                               d_cond=768)
+    return clip_text_embedder
+
+def load_latent_diffusion_model(autoencoder, clip_text_embedder, unet_model):
+    with monit.section('Initialize Latent Diffusion model'):
+        latent_diffusion_config = {
+            **Config.config['model'],
+            'autoencoder': autoencoder,
+            'clip_embedder': clip_text_embedder,
+            'unet_model': unet_model
+        }
+
+        model = LatentDiffusion(
+            **latent_diffusion_config
+        )
+
+        return model
+
+def load_model(path: Union[str, Path] = '', device = 'cuda:0', config_path='') -> LatentDiffusion:
+    """
+    ### Load [`LatentDiffusion` model](latent_diffusion.html)
+    """
+    config = Config.load_config(config_path)
+    Config.config = config
+
+    autoencoder = load_autoencoder()
+    clip_text_embedder = load_clip_text_embedder(device)
+    unet_model = load_unet_model()
 
     # Initialize the Latent Diffusion model
-    with monit.section('Initialize Latent Diffusion model'):
-        model = LatentDiffusion(linear_start=0.00085,
-                                linear_end=0.0120,
-                                n_steps=1000,
-                                latent_scaling_factor=0.18215,
-
-                                autoencoder=autoencoder,
-                                clip_embedder=clip_text_embedder,
-                                unet_model=unet_model)
+    model = load_latent_diffusion_model(autoencoder, clip_text_embedder, unet_model)
 
     # Load the checkpoint
     with monit.section(f"Loading model from {path}"):
@@ -169,5 +202,4 @@ def get_autocast(force_cpu: bool = False):
     if torch.cuda.is_available() and not force_cpu:
         return torch.cuda.amp.autocast()
 
-    print("WARNING: You are running this script without CUDA. Brace yourself for a slow ride.")
     return torch.cpu.amp.autocast()

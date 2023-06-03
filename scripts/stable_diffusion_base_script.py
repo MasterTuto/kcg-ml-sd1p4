@@ -114,14 +114,15 @@ class StableDiffusionBaseScript:
         
         return x
 
-    def initialize_script(self):
-        self.load_model()
+    def initialize_script(self, config_path: str = ''):
+        self.load_model(config_path)
         self.initialize_sampler()
 
-    def load_model(self):
+    def load_model(self, config_path: str = ''):
         self.model = load_model(
             self.checkpoint_path,
-            self.device_id
+            self.device_id,
+            config_path
         )
 
         # Move the model to device
