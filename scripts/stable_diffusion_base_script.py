@@ -15,6 +15,29 @@ from typing import Union, Optional
 
 from pathlib import Path
 
+import torch
+from typing import Tuple
+
+def corrigir_entrada(imagem: torch.Tensor, mascara: torch.Tensor) -> torch.Tensor:
+    num_canais_imagem = imagem.shape[0]
+    num_canais_mascara = mascara.shape[0]
+
+    if num_canais_imagem != 9 or num_canais_mascara != 1:
+        nova_imagem = torch.cat([imagem] * (9 // num_canais_imagem), dim=0)
+        nova_mascara = torch.cat([mascara] * (1 // num_canais_mascara), dim=0)
+
+        if num_canais_imagem % 9 != 0:
+            canais_restantes_imagem = num_canais_imagem % 9
+            nova_imagem = torch.cat([nova_imagem, imagem[:canais_restantes_imagem]], dim=0)
+
+        if num_canais_mascara != 1:
+            canais_restantes_mascara = num_canais_mascara
+            nova_mascara = torch.cat([nova_mascara, mascara[:canais_restantes_mascara]], dim=0)
+
+        return torch.cat([nova_imagem, nova_mascara], dim=0)
+    else:
+        return torch.cat([imagem, mascara], dim=0)
+
 class StableDiffusionBaseScript:
     model: LatentDiffusion
     sampler: DiffusionSampler
@@ -101,6 +124,7 @@ class StableDiffusionBaseScript:
         orig_2 = None
         # If we have a mask and noise, it's in-painting
         if mask is not None and orig_noise is not None:
+            orig = corrigir_entrada(orig, mask)
             orig_2 = orig
         # Add noise to the original image
         x = self.sampler.q_sample(orig, t_index, noise=orig_noise)
