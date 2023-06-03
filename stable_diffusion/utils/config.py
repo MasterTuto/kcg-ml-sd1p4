@@ -41,7 +41,6 @@ class Config:
         }
     }
 
-    @lru_cache()
     @classmethod
     def load_config(cls, yaml_path: str):
         if not yaml_path:
