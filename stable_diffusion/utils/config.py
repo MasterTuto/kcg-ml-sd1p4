@@ -52,6 +52,6 @@ class Config:
             exit(1)
 
         with open(yaml_path) as f:
-            cls.config = yaml.load(f, Loader=yaml.FullLoader)
+            cls.config = yaml.safe_load(f.read())
         
         return cls.config
