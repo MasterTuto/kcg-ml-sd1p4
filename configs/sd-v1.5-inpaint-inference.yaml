@@ -1,6 +1,6 @@
 encoder:
   z_channels: 4
-  in_channels: 3
+  in_channels: 9
   channels: 128
   channel_multipliers:
     - 1
@@ -9,7 +9,7 @@ encoder:
     - 4
   n_resnet_blocks: 2
 decoder:
-  out_channels: 3
+  out_channels: 9
   z_channels: 4
   channels: 128
   channel_multipliers:
