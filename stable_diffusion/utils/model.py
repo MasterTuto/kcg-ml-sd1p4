@@ -10,7 +10,7 @@ summary: >
 
 import random
 from pathlib import Path
-from typing import Union
+from typing import Union, Mapping, Any
 
 import PIL
 import numpy as np
@@ -106,6 +106,31 @@ def load_latent_diffusion_model(autoencoder, clip_text_embedder, unet_model):
         )
 
         return model
+    
+import mmap
+import json
+import os
+
+DTYPES = {"F32": torch.float32}
+
+def create_tensor(storage, info, offset):
+    dtype = DTYPES[info["dtype"]]
+    shape = info["shape"]
+    start, stop = info["data_offsets"]
+    return torch.asarray(storage[start + offset : stop + offset], dtype=torch.uint8).view(dtype=dtype).reshape(shape)
+
+def load_safetensor(filename: str) -> Mapping[str, Any]:
+    with open(filename, mode="r", encoding="utf8") as file_obj:
+        with mmap.mmap(file_obj.fileno(), length=0, access=mmap.ACCESS_READ) as m:
+            header = m.read(8)
+            n = int.from_bytes(header, "little")
+            metadata_bytes = m.read(n)
+            metadata = json.loads(metadata_bytes)
+
+    size = os.stat(filename).st_size
+    storage = torch.ByteStorage.from_file(filename, shared=False, size=size).untyped()
+    offset = n + 8
+    return {name: create_tensor(storage, info, offset) for name, info in metadata.items() if name != "__metadata__"}
 
 def load_model(path: Union[str, Path] = '', device = 'cuda:0', config_path='') -> LatentDiffusion:
     """
@@ -123,7 +148,10 @@ def load_model(path: Union[str, Path] = '', device = 'cuda:0', config_path='') -
 
     # Load the checkpoint
     with monit.section(f"Loading model from {path}"):
-        checkpoint = torch.load(path, map_location="cpu")
+        if str(path).endswith('.safetensors'):
+            checkpoint = torch.load(path, map_location="cpu")
+        else:
+            checkpoint = load_safetensor(str(path))
 
     # Set model state
     with monit.section('Load state'):
