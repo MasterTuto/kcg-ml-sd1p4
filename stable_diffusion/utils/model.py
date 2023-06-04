@@ -122,9 +122,12 @@ def load_model(path: Union[str, Path] = '', device = 'cuda:0', config_path='') -
     # Initialize the Latent Diffusion model
     model = load_latent_diffusion_model(autoencoder, clip_text_embedder, unet_model)
 
+    # Check if it is safetensor
+    is_safetensor = str(path).endswith('.safetensors')
+
     # Load the checkpoint
     with monit.section(f"Loading model from {path}"):
-        if str(path).endswith('.safetensors'):
+        if is_safetensor:
             print("Loading safetensors")
             checkpoint: Mapping[str, Any] = load_file(str(path))
         else:
@@ -132,6 +135,7 @@ def load_model(path: Union[str, Path] = '', device = 'cuda:0', config_path='') -
 
     # Set model state
     with monit.section('Load state'):
+        state_dict = checkpoint if is_safetensor else checkpoint["state_dict"]
         missing_keys, extra_keys = model.load_state_dict(checkpoint["state_dict"], strict=False)
 
     # Debugging output
