@@ -125,10 +125,10 @@ def load_model(path: Union[str, Path] = '', device = 'cuda:0', config_path='') -
     # Load the checkpoint
     with monit.section(f"Loading model from {path}"):
         if str(path).endswith('.safetensors'):
-            checkpoint = torch.load(path, map_location="cpu")
-        else:
             print("Loading safetensors")
             checkpoint: Mapping[str, Any] = load_file(str(path))
+        else:
+            checkpoint = torch.load(path, map_location="cpu")
 
     # Set model state
     with monit.section('Load state'):
