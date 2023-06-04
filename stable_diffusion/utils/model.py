@@ -136,7 +136,7 @@ def load_model(path: Union[str, Path] = '', device = 'cuda:0', config_path='') -
     # Set model state
     with monit.section('Load state'):
         state_dict = checkpoint if is_safetensor else checkpoint["state_dict"]
-        missing_keys, extra_keys = model.load_state_dict(checkpoint["state_dict"], strict=False)
+        missing_keys, extra_keys = model.load_state_dict(state_dict, strict=False)
 
     # Debugging output
     inspect(global_step=checkpoint.get('global_step', -1), missing_keys=missing_keys, extra_keys=extra_keys,
